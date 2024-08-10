@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kaniko-wrapper"]
+
+[project]
+name = "kaniko-wrapper"
+version = "0.0.0.0"
+authors = [
+  {name = "EpicMorg", email = "developer@epicm.org"}
+]
+maintainers = [
+  {name = "EpicMorg", email = "developer@epicm.org"}
+]
+dependencies = [
+  "pyyaml",
+]
+description = "CLI wrapper for Kaniko build sysytem"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.6"
+keywords = ["kaniko", "docker", "build"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+
+[project.urls]
+Homepage = "https://github.com/EpicMorg/kaniko-wrapper"
+Documentation = "https://github.com/EpicMorg/kaniko-wrapper/blob/master/README.md"
+Repository = "https://github.com/EpicMorg/kaniko-wrapper.git"
+"Bug Tracker" = "https://github.com/EpicMorg/kaniko-wrapper/issues"
+Changelog = "https://github.com/EpicMorg/kaniko-wrapper/blob/master/CHANGELOG.md"
