@@ -1,4 +1,6 @@
 # Changelog
+* `1.1.0.0`:
+    * Improvements, bugfixes
 * `1.0.1.0`:
     * Fixed module naming. I am sorry.
     * Improvements, bugfixes

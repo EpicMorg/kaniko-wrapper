@@ -10,7 +10,7 @@ import logging
 import sys
 
 # Script version
-SCRIPT_VERSION = "1.0.1.0"
+SCRIPT_VERSION = "1.1.0.0"
 
 # ASCII art for EpicMorg
 ASCII_ART = r"""
@@ -69,7 +69,9 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, build
         kaniko_image,
         '--context', '/workspace',
         '--dockerfile', f'/workspace/{dockerfile}',
-        '--compressed-caching',
+        '--use-new-run',
+        '--snapshot-mode=redo',
+        '--cache=false',
         '--single-snapshot',
         '--cleanup'
     ])
