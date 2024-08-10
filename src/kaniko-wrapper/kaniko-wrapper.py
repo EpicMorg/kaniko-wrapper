@@ -2,6 +2,7 @@ import os
 import yaml
 import subprocess
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def load_compose_file(file_path):
     with open(file_path, 'r') as file:
@@ -39,9 +40,6 @@ def main():
     image_names = defaultdict(int)
     
     for service_name, service_data in services.items():
-        build_data = service_data.get('build', {})
-        build_context = build_data.get('context', '.')
-        dockerfile = build_data.get('dockerfile', 'Dockerfile')
         image_name = service_data.get('image')
         
         if not image_name:
@@ -55,17 +53,25 @@ def main():
             print(f"Error: Image name {image_name} is used {count} times.")
             return
     
-    for service_name, service_data in services.items():
-        build_data = service_data.get('build', {})
-        build_context = build_data.get('context', '.')
-        dockerfile = build_data.get('dockerfile', 'Dockerfile')
-        image_name = service_data.get('image')
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        for service_name, service_data in services.items():
+            build_data = service_data.get('build', {})
+            build_context = build_data.get('context', '.')
+            dockerfile = build_data.get('dockerfile', 'Dockerfile')
+            image_name = service_data.get('image')
+            
+            if not image_name:
+                print(f"No image specified for service {service_name}")
+                continue
+            
+            futures.append(executor.submit(build_with_kaniko, service_name, build_context, dockerfile, image_name))
         
-        if not image_name:
-            print(f"No image specified for service {service_name}")
-            continue
-        
-        build_with_kaniko(service_name, build_context, dockerfile, image_name)
+        for future in as_completed(futures):
+            try:
+                future.result()
+            except Exception as exc:
+                print(f"Generated an exception: {exc}")
 
 if __name__ == '__main__':
     main()

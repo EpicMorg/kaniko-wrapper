@@ -8,3 +8,5 @@
 * `0.0.0.2`:
     * Bugfixes
     * Added a check for the uniqueness of image names before starting the build and to prevent overwriting images with the same names and tags.
+* `0.0.0.3`:
+    * Added support of parallel builds
