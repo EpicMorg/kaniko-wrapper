@@ -1,4 +1,6 @@
-# kaniko-wrapper
+# [![Activity](https://img.shields.io/github/commit-activity/m/EpicMorg/kaniko-wrapper?label=commits&style=flat-square)](https://github.com/EpicMorg/kaniko-wrapper/commits) [![GitHub issues](https://img.shields.io/github/issues/EpicMorg/kaniko-wrapper.svg?style=popout-square)](https://github.com/EpicMorg/kaniko-wrapper/issues) [![GitHub forks](https://img.shields.io/github/forks/EpicMorg/kaniko-wrapper.svg?style=popout-square)](https://github.com/EpicMorg/kaniko-wrapper/network) [![GitHub stars](https://img.shields.io/github/stars/EpicMorg/kaniko-wrapper.svg?style=popout-square)](https://github.com/EpicMorg/kaniko-wrapper/stargazers)  [![Size](https://img.shields.io/github/repo-size/EpicMorg/kaniko-wrapper?label=size&style=flat-square)](https://github.com/EpicMorg/kaniko-wrapper/archive/master.zip) [![Release](https://img.shields.io/github/v/release/EpicMorg/kaniko-wrapper?style=flat-square)](https://github.com/EpicMorg/kaniko-wrapper/releases) [![GitHub license](https://img.shields.io/github/license/EpicMorg/kaniko-wrapper.svg?style=popout-square)](LICENSE.md) [![Changelog](https://img.shields.io/badge/Changelog-yellow.svg?style=popout-square)](CHANGELOG.md) [![PyPI - Downloads](https://img.shields.io/pypi/dm/kaniko-wrapper?style=flat-square)](https://pypi.org/project/kaniko-wrapper/)
+
+## Description
 Python wrapper for run kaniko from shell with parameters from `docker-compose.yml` file.
 
 ## Motivation
@@ -29,7 +31,7 @@ kaniko-wapper
 ```
 services:
   app:
-    image: "epicmorg/docker:image"
+    image: "EpicMorg/kaniko-wrapper:image"
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -40,11 +42,11 @@ services:
 ```
 services:
   app:
-    image: "epicmorg/docker:image-jdk11"
+    image: "EpicMorg/kaniko-wrapper:image-jdk11"
     build:
       context: .
   app-develop:
-    image: "epicmorg/docker:image-develop-jdk11"
+    image: "EpicMorg/kaniko-wrapper:image-develop-jdk11"
     build:
       context: .
       dockerfile: ./Dockerfile.develop
