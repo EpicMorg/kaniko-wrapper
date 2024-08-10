@@ -20,3 +20,8 @@
 * `0.0.0.7`:
     * Added support of pushing new images to repository.
     * Added mounting credentails from host.
+* `0.0.0.8`:
+    * Added args support:
+        * `--compose-file` - set path to compose file
+        * `--kaniko-image` - set another version of kaniko image
+        * `--deploy` - deploy afrer build

@@ -15,6 +15,11 @@ cd <...>/directory/contains/docker/and/docker-compose-file/
 kaniko-wapper
 ```
 
+### Arguments
+* `--compose-file` - set path to compose file;
+* `--kaniko-image` - set another version of kaniko image;
+* `--deploy` - deploy afrer build;
+
 ## Supported features (example):
 
 1. Single project in `docker-compose.yml`
