@@ -1,11 +1,12 @@
 import os
+import shutil
+import argparse
 import yaml
 import subprocess
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 import logging
-import argparse
 
 load_dotenv()
 
@@ -40,14 +41,25 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, build
         kaniko_image,
         '--context', '/workspace',
         '--dockerfile', f'/workspace/{dockerfile}',
-        '--destination', image_name,
-        '--use-new-run',
-        '--compressed-caching',
-        '--single-snapshot',
-        '--cleanup'
     ])
     
-
+    if deploy:
+        kaniko_command.extend([
+            '--destination', image_name,
+            '--use-new-run',
+            '--compressed-caching',
+            '--single-snapshot',
+            '--cleanup'
+        ])
+    else:
+        kaniko_command.extend([
+            '--no-push',
+            '--use-new-run',
+            '--compressed-caching',
+            '--single-snapshot',
+            '--cleanup'
+        ])
+    
     for arg_name, arg_value in build_args.items():
         kaniko_command.extend(['--build-arg', f'{arg_name}={arg_value}'])
     
@@ -59,6 +71,19 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, build
         logging.info(result.stdout)
     else:
         logging.error(f"Error building {service_name}: {result.stderr}")
+
+def copy_files_to_directories(root_directory, script_directory, ignore_directory, files_to_copy):
+    for subdir, dirs, files in os.walk(root_directory):
+
+        if ignore_directory in subdir:
+            continue
+
+        if 'docker-compose.yml' in files and 'Dockerfile' in files:
+            for file_name in files_to_copy:
+                source = os.path.join(script_directory, file_name)
+                destination = os.path.join(subdir, file_name)
+                shutil.copyfile(source, destination)
+                print(f"Copied {file_name} to {subdir}")
 
 def main():
     setup_logging()
