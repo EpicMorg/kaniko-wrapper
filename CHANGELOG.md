@@ -1,4 +1,11 @@
 # Changelog
+* `0.0.1.1`:
+    * Bugfixes
+    * Updated args:
+        * `--dry-run`, `--dry` - Dry run: build images without pushing and with cleanup
+        * `--compose-file` - Path to `docker-compose.yml` file
+        * `--kaniko-image` - Kaniko executor image (def. `gcr.io/kaniko-project/executor:latest`)
+        * `--push`, `--deploy`, `-d`, `-p` -Deploy the built images to the registry
 * `0.0.1.0`:
     * Bugfixes
     * Added support of "Dry Run" arg: `--dry`

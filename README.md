@@ -16,12 +16,10 @@ kaniko-wapper
 ```
 
 ### Arguments (examples)
-* `--dry` - dry run
-* `--compose-file` - set path to compose file;
-* `--kaniko-image` - set another version of kaniko image;
-  * `kaniko-wapper --kaniko-image gcr.io/kaniko-project/executor:v1.6.0`
-* `--deploy` - deploy afrer build:
-  * `kaniko-wapper --kaniko-image gcr.io/kaniko-project/executor:v1.6.0 --deploy`
+* `--dry-run`, `--dry` - Dry run: build images without pushing and with cleanup
+* `--compose-file` - Path to `docker-compose.yml` file
+* `--kaniko-image` - Kaniko executor image (def. `gcr.io/kaniko-project/executor:latest`)
+* `--push`, `--deploy`, `-d`, `-p` -Deploy the built images to the registry
 
 ## Supported features (example):
 

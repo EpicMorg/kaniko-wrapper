@@ -7,6 +7,10 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 import logging
+import sys
+
+# Script version
+SCRIPT_VERSION = "0.0.1.1"
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,11 +19,12 @@ def setup_logging():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Kaniko build script")
+    parser = argparse.ArgumentParser(description="EpicMorg: Kaniko-Compose Wrapper")
     parser.add_argument('--compose-file', default=os.getenv('COMPOSE_FILE', 'docker-compose.yml'), help='Path to docker-compose.yml file')
     parser.add_argument('--kaniko-image', default=os.getenv('KANIKO_IMAGE', 'gcr.io/kaniko-project/executor:latest'), help='Kaniko executor image')
-    parser.add_argument('--deploy', action='store_true', help='Deploy the built images to the registry')
-    parser.add_argument('--dry', action='store_true', help='Dry run: build images without pushing and with cleanup')
+    parser.add_argument('--push', '--deploy', '-d', '-p', action='store_true', help='Deploy the built images to the registry')
+    parser.add_argument('--dry-run', '--dry', action='store_true', help='Dry run: build images without pushing and with cleanup')
+    parser.add_argument('--version', '-v', action='store_true', help='Show script version')
     return parser.parse_args()
 
 def load_compose_file(file_path):
@@ -101,11 +106,27 @@ def main():
     setup_logging()
     
     args = parse_args()
+
+    # Show version and exit if --version or no arguments are provided
+    if args.version or not (args.push or args.dry_run):
+        print(f"EpicMorg: Kaniko-Compose Wrapper {SCRIPT_VERSION}, Python: {sys.version}")
+        return
+
+    # Show help and exit if --help is provided
+    if args.help:
+        print("EpicMorg: Kaniko-Compose Wrapper\n")
+        print("Arguments:")
+        print("--compose-file        Path to docker-compose.yml file")
+        print("--kaniko-image        Kaniko executor image")
+        print("--push, --deploy, -d, -p    Deploy the built images to the registry")
+        print("--dry-run, --dry      Dry run: build images without pushing and with cleanup")
+        print("--version, -v         Show script version")
+        return
     
     compose_file = args.compose_file
     kaniko_image = args.kaniko_image
-    deploy = args.deploy
-    dry = args.dry
+    deploy = args.push
+    dry = args.dry_run
     
     if not os.path.exists(compose_file):
         logging.error(f"{compose_file} not found")
