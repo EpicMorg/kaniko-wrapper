@@ -3,17 +3,20 @@ import yaml
 import subprocess
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def load_compose_file(file_path):
     with open(file_path, 'r') as file:
         return yaml.safe_load(file)
 
-def build_with_kaniko(service_name, build_context, dockerfile, image_name):
+def build_with_kaniko(service_name, build_context, dockerfile, image_name, kaniko_image):
     kaniko_command = [
         'docker', 'run',
         '--rm',
         '-v', f'{os.path.abspath(build_context)}:/workspace',
-        'gcr.io/kaniko-project/executor:latest',
+        kaniko_image,
         '--context', '/workspace',
         '--dockerfile', f'/workspace/{dockerfile}',
         '--destination', image_name
@@ -28,7 +31,8 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name):
         print(f"Error building {service_name}: {result.stderr}")
 
 def main():
-    compose_file = 'docker-compose.yml'
+    compose_file = os.getenv('COMPOSE_FILE', 'docker-compose.yml')
+    kaniko_image = os.getenv('KANIKO_IMAGE', 'gcr.io/kaniko-project/executor:latest')
     
     if not os.path.exists(compose_file):
         print(f"{compose_file} not found")
@@ -65,7 +69,7 @@ def main():
                 print(f"No image specified for service {service_name}")
                 continue
             
-            futures.append(executor.submit(build_with_kaniko, service_name, build_context, dockerfile, image_name))
+            futures.append(executor.submit(build_with_kaniko, service_name, build_context, dockerfile, image_name, kaniko_image))
         
         for future in as_completed(futures):
             try:
