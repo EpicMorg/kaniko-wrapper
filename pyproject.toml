@@ -7,7 +7,7 @@ packages = ["src/kaniko-wrapper"]
 
 [project]
 name = "kaniko-wrapper"
-version = "0.0.0.5"
+version = "0.0.0.6"
 authors = [
   {name = "EpicMorg", email = "developer@epicm.org"}
 ]
@@ -15,7 +15,7 @@ maintainers = [
   {name = "EpicMorg", email = "developer@epicm.org"}
 ]
 dependencies = [
-  "pyyaml",
+  "PyYAML",
   "python-dotenv",
 ]
 description = "CLI wrapper for Kaniko build sysytem"

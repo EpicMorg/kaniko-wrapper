@@ -20,7 +20,11 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, build
         kaniko_image,
         '--context', '/workspace',
         '--dockerfile', f'/workspace/{dockerfile}',
-        '--destination', image_name
+        '--destination', image_name,
+        '--use-new-run',
+        '--compressed-caching',
+        '--single-snapshot',
+        '--cleanup'
     ]
     
     # Добавление аргументов сборки, если они есть
@@ -71,7 +75,7 @@ def main():
             image_name = service_data.get('image')
             build_args = build_data.get('args', {})
             
-            # Замена переменных окружения на их значения
+            # Замена переменных окружения на их значения, если они используются
             build_args = {key: os.getenv(key, value) for key, value in build_args.items()}
             
             if not image_name:

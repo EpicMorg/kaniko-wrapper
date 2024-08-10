@@ -15,3 +15,5 @@
 * `0.0.0.5`:
     * Bugfixes
     * The script will automatically use the variable values from .env for the build arguments, if specified, and pass them to the Kaniko command. If the build arguments are not specified, they simply will not be added to the command.
+* `0.0.0.6`:
+    * Added new default build arguments.
