@@ -6,7 +6,7 @@ def load_compose_file(file_path):
     with open(file_path, 'r') as file:
         return yaml.safe_load(file)
 
-def build_with_kaniko(service_name, build_context, dockerfile, image_name, tag):
+def build_with_kaniko(service_name, build_context, dockerfile, image_name):
     kaniko_command = [
         'docker', 'run',
         '--rm',
@@ -14,7 +14,7 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, tag):
         'gcr.io/kaniko-project/executor:latest',
         '--context', '/workspace',
         '--dockerfile', f'/workspace/{dockerfile}',
-        '--destination', f'{image_name}:{tag}'
+        '--destination', image_name
     ]
     
     print(f"Building {service_name} with Kaniko: {' '.join(kaniko_command)}")
@@ -39,10 +39,13 @@ def main():
         build_data = service_data.get('build', {})
         build_context = build_data.get('context', '.')
         dockerfile = build_data.get('dockerfile', 'Dockerfile')
-        image_name = service_data.get('image', f"{service_name}-image")
-        tag = 'latest'
+        image_name = service_data.get('image')
         
-        build_with_kaniko(service_name, build_context, dockerfile, image_name, tag)
+        if not image_name:
+            print(f"No image specified for service {service_name}")
+            continue
+        
+        build_with_kaniko(service_name, build_context, dockerfile, image_name)
 
 if __name__ == '__main__':
     main()
