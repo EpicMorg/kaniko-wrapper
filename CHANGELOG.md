@@ -5,3 +5,6 @@
     * Bugfixes
     * Supported OS - Unix only. Because `kaniko` dont support `Windows`.
     * Added support of `image` tag from `docker-compose.yml`
+* `0.0.0.2`:
+    * Bugfixes
+    * Added a check for the uniqueness of image names before starting the build and to prevent overwriting images with the same names and tags.

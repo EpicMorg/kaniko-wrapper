@@ -1,6 +1,7 @@
 import os
 import yaml
 import subprocess
+from collections import defaultdict
 
 def load_compose_file(file_path):
     with open(file_path, 'r') as file:
@@ -35,6 +36,25 @@ def main():
     compose_data = load_compose_file(compose_file)
     
     services = compose_data.get('services', {})
+    image_names = defaultdict(int)
+    
+    for service_name, service_data in services.items():
+        build_data = service_data.get('build', {})
+        build_context = build_data.get('context', '.')
+        dockerfile = build_data.get('dockerfile', 'Dockerfile')
+        image_name = service_data.get('image')
+        
+        if not image_name:
+            print(f"No image specified for service {service_name}")
+            continue
+        
+        image_names[image_name] += 1
+    
+    for image_name, count in image_names.items():
+        if count > 1:
+            print(f"Error: Image name {image_name} is used {count} times.")
+            return
+    
     for service_name, service_data in services.items():
         build_data = service_data.get('build', {})
         build_context = build_data.get('context', '.')
