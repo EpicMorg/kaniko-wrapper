@@ -10,7 +10,26 @@ import logging
 import sys
 
 # Script version
-SCRIPT_VERSION = "0.0.1.1"
+SCRIPT_VERSION = "1.0.1.0"
+
+# ASCII art for EpicMorg
+ASCII_ART = r"""
++=================================================+
+| ____|        _)         \  |                    |
+| __|    __ \   |   __|  |\/ |   _ \    __|  _` | |
+| |      |   |  |  (     |   |  (   |  |    (   | |
+|_____|  .__/  _| \___| _|  _| \___/  _|   \__, | |
+| |  /  _|           _)  |                 |___/  |
+| ' /    _` |  __ \   |  |  /   _ \               |
+| . \   (   |  |   |  |    <   (   |              |
+|_|\_\ \__,_| _|  _| _| _|\_\ \___/               |
+|\ \        /                                     |
+| \ \  \   /   __|  _` |  __ \   __ \    _ \   __||
+|  \ \  \ /   |    (   |  |   |  |   |   __/  |   |
+|   \_/\_/   _|   \__,_|  .__/   .__/  \___| _|   |
+|                        _|     _|                |
++=================================================+
+"""
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,12 +38,13 @@ def setup_logging():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="EpicMorg: Kaniko-Compose Wrapper")
+    parser = argparse.ArgumentParser(description="EpicMorg: Kaniko-Compose Wrapper", add_help=False)
     parser.add_argument('--compose-file', default=os.getenv('COMPOSE_FILE', 'docker-compose.yml'), help='Path to docker-compose.yml file')
     parser.add_argument('--kaniko-image', default=os.getenv('KANIKO_IMAGE', 'gcr.io/kaniko-project/executor:latest'), help='Kaniko executor image')
     parser.add_argument('--push', '--deploy', '-d', '-p', action='store_true', help='Deploy the built images to the registry')
     parser.add_argument('--dry-run', '--dry', action='store_true', help='Dry run: build images without pushing and with cleanup')
     parser.add_argument('--version', '-v', action='store_true', help='Show script version')
+    parser.add_argument('--help', '-h', action='store_true', help='Show this help message and exit')
     return parser.parse_args()
 
 def load_compose_file(file_path):
@@ -87,40 +107,36 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, build
         for line in process.stderr:
             logging.error(line.strip())
         logging.error(f"Error building {service_name}")
+        raise Exception(f"Failed to build {service_name}")
 
-def copy_files_to_directories(root_directory, script_directory, ignore_directory, files_to_copy):
-    for subdir, dirs, files in os.walk(root_directory):
-        # Ignore the specified directory
-        if ignore_directory in subdir:
-            continue
+def show_help():
+    print(ASCII_ART)
+    print("EpicMorg: Kaniko-Compose Wrapper\n")
+    print("Arguments:")
+    print("--compose-file        Path to docker-compose.yml file")
+    print("--kaniko-image        Kaniko executor image")
+    print("--push, --deploy, -d, -p    Deploy the built images to the registry")
+    print("--dry-run, --dry      Dry run: build images without pushing and with cleanup")
+    print("--version, -v         Show script version")
+    print("--help, -h            Show this help message and exit")
 
-        if 'docker-compose.yml' in files and 'Dockerfile' in files:
-            for file_name in files_to_copy:
-                source = os.path.join(script_directory, file_name)
-                destination = os.path.join(subdir, file_name)
-                # Copy and overwrite the file if it already exists
-                shutil.copyfile(source, destination)
-                print(f"Copied {file_name} to {subdir}")
+def show_version():
+    print(ASCII_ART)
+    print(f"EpicMorg: Kaniko-Compose Wrapper {SCRIPT_VERSION}, Python: {sys.version}")
 
 def main():
     setup_logging()
     
     args = parse_args()
 
-    # Show version and exit if --version or no arguments are provided
-    if args.version or not (args.push or args.dry_run):
-        print(f"EpicMorg: Kaniko-Compose Wrapper {SCRIPT_VERSION}, Python: {sys.version}")
-        return
-
     # Show help and exit if --help is provided
     if args.help:
-        print("EpicMorg: Kaniko-Compose Wrapper\n")
-        print("Arguments:")
-        print("--compose-file        Path to docker-compose.yml file")
-        print("--kaniko-image        Kaniko executor image")
-        print("--push, --deploy, -d, -p    Deploy the built images to the registry")
-        print("--dry-run, --dry      Dry run: build images without pushing and with cleanup")
-        print("--version, -v         Show script version")
+        show_help()
+        return
+    
+    # Show version and exit if --version or no relevant arguments are provided
+    if args.version or not (args.push or args.dry_run or args.compose_file != 'docker-compose.yml' or args.kaniko_image != 'gcr.io/kaniko-project/executor:latest'):
+        show_version()
         return
     
     compose_file = args.compose_file
@@ -151,29 +167,30 @@ def main():
             logging.error(f"Error: Image name {image_name} is used {count} times.")
             return
     
-    with ThreadPoolExecutor() as executor:
-        futures = []
-        for service_name, service_data in services.items():
-            build_data = service_data.get('build', {})
-            build_context = build_data.get('context', '.')
-            dockerfile = build_data.get('dockerfile', 'Dockerfile')
-            image_name = service_data.get('image')
-            build_args = build_data.get('args', {})
+    try:
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for service_name, service_data in services.items():
+                build_data = service_data.get('build', {})
+                build_context = build_data.get('context', '.')
+                dockerfile = build_data.get('dockerfile', 'Dockerfile')
+                image_name = service_data.get('image')
+                build_args = build_data.get('args', {})
+                
+                # Substitute environment variables with their values if they exist
+                build_args = {key: os.getenv(key, value) for key, value in build_args.items()}
+                
+                if not image_name:
+                    logging.warning(f"No image specified for service {service_name}")
+                    continue
+                
+                futures.append(executor.submit(build_with_kaniko, service_name, build_context, dockerfile, image_name, build_args, kaniko_image, deploy, dry))
             
-            # Substitute environment variables with their values if they exist
-            build_args = {key: os.getenv(key, value) for key, value in build_args.items()}
-            
-            if not image_name:
-                logging.warning(f"No image specified for service {service_name}")
-                continue
-            
-            futures.append(executor.submit(build_with_kaniko, service_name, build_context, dockerfile, image_name, build_args, kaniko_image, deploy, dry))
-        
-        for future in as_completed(futures):
-            try:
+            for future in as_completed(futures):
                 future.result()
-            except Exception as exc:
-                logging.error(f"Generated an exception: {exc}")
+    except Exception as exc:
+        logging.error(f"Build failed: {exc}")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

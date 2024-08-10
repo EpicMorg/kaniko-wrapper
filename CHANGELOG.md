@@ -1,4 +1,13 @@
 # Changelog
+* `1.0.1.0`:
+    * Fixed module naming. I am sorry.
+    * Improvements, bugfixes
+        * `--compose-file` - Path to docker-compose.yml file
+        * `--kaniko-image` Kaniko executor image (def. `gcr.io/kaniko-project/executor:latest`)
+        * `--push`, `--deploy`, `-d`, `-p` - Deploy the built images to the registry
+        * `--dry-run`, `--dry` - Dry run: build images without pushing and with cleanup
+        * `--version`, `-v` - Show script version
+        * `--help`, `-h` - Show this help message and exit
 * `0.0.1.1`:
     * Bugfixes
     * Updated args:

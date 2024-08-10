@@ -3,11 +3,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/kaniko-wrapper"]
+packages = ["src/kaniko_wrapper"]
 
 [project]
 name = "kaniko-wrapper"
-version = "0.0.1.1"
+version = "1.0.1.0"
 authors = [
   {name = "EpicMorg", email = "developer@epicm.org"}
 ]
@@ -18,16 +18,20 @@ dependencies = [
   "PyYAML",
   "python-dotenv",
 ]
-description = "CLI wrapper for Kaniko build sysytem"
+description = "EpicMorg: Kaniko-Compose Wrapper - CLI wrapper for Kaniko build system"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.6"
 keywords = ["kaniko", "docker", "build"]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: Unix"
 ]
+
+[project.scripts]
+kaniko-wrapper = "kaniko_wrapper.kaniko_wrapper:main"
 
 [project.urls]
 Homepage = "https://github.com/EpicMorg/kaniko-wrapper"
