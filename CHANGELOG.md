@@ -1,4 +1,7 @@
 # Changelog
+* `0.0.1.0`:
+    * Bugfixes
+    * Added support of "Dry Run" arg: `--dry`
 * `0.0.0.9`:
     * Bugfixes
 * `0.0.0.8`:

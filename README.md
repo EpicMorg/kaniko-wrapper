@@ -16,6 +16,7 @@ kaniko-wapper
 ```
 
 ### Arguments (examples)
+* `--dry` - dry run
 * `--compose-file` - set path to compose file;
 * `--kaniko-image` - set another version of kaniko image;
   * `kaniko-wapper --kaniko-image gcr.io/kaniko-project/executor:v1.6.0`

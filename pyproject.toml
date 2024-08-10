@@ -7,7 +7,7 @@ packages = ["src/kaniko-wrapper"]
 
 [project]
 name = "kaniko-wrapper"
-version = "0.0.0.9"
+version = "0.0.1.0"
 authors = [
   {name = "EpicMorg", email = "developer@epicm.org"}
 ]
