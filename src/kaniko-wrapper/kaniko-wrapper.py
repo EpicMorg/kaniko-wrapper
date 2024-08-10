@@ -4,9 +4,12 @@ import subprocess
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
+import logging
 
-# Загрузка переменных окружения из файла .env
 load_dotenv()
+
+def setup_logging():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def load_compose_file(file_path):
     with open(file_path, 'r') as file:
@@ -17,6 +20,8 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, build
         'docker', 'run',
         '--rm',
         '-v', f'{os.path.abspath(build_context)}:/workspace',
+        '-v', '/var/run/docker.sock:/var/run/docker.sock', 
+        '-v', f'{os.path.expanduser("~")}/.docker:/root/.docker', 
         kaniko_image,
         '--context', '/workspace',
         '--dockerfile', f'/workspace/{dockerfile}',
@@ -27,24 +32,26 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, build
         '--cleanup'
     ]
     
-    # Добавление аргументов сборки, если они есть
     for arg_name, arg_value in build_args.items():
         kaniko_command.extend(['--build-arg', f'{arg_name}={arg_value}'])
     
-    print(f"Building {service_name} with Kaniko: {' '.join(kaniko_command)}")
+    logging.info(f"Building {service_name} with Kaniko: {' '.join(kaniko_command)}")
     
     result = subprocess.run(kaniko_command, capture_output=True, text=True)
     if result.returncode == 0:
-        print(f"Successfully built {service_name}")
+        logging.info(f"Successfully built {service_name}")
+        logging.info(result.stdout)
     else:
-        print(f"Error building {service_name}: {result.stderr}")
+        logging.error(f"Error building {service_name}: {result.stderr}")
 
 def main():
+    setup_logging()
+    
     compose_file = os.getenv('COMPOSE_FILE', 'docker-compose.yml')
     kaniko_image = os.getenv('KANIKO_IMAGE', 'gcr.io/kaniko-project/executor:latest')
     
     if not os.path.exists(compose_file):
-        print(f"{compose_file} not found")
+        logging.error(f"{compose_file} not found")
         return
     
     compose_data = load_compose_file(compose_file)
@@ -56,14 +63,14 @@ def main():
         image_name = service_data.get('image')
         
         if not image_name:
-            print(f"No image specified for service {service_name}")
+            logging.warning(f"No image specified for service {service_name}")
             continue
         
         image_names[image_name] += 1
     
     for image_name, count in image_names.items():
         if count > 1:
-            print(f"Error: Image name {image_name} is used {count} times.")
+            logging.error(f"Error: Image name {image_name} is used {count} times.")
             return
     
     with ThreadPoolExecutor() as executor:
@@ -75,11 +82,10 @@ def main():
             image_name = service_data.get('image')
             build_args = build_data.get('args', {})
             
-            # Замена переменных окружения на их значения, если они используются
             build_args = {key: os.getenv(key, value) for key, value in build_args.items()}
             
             if not image_name:
-                print(f"No image specified for service {service_name}")
+                logging.warning(f"No image specified for service {service_name}")
                 continue
             
             futures.append(executor.submit(build_with_kaniko, service_name, build_context, dockerfile, image_name, build_args, kaniko_image))
@@ -88,7 +94,7 @@ def main():
             try:
                 future.result()
             except Exception as exc:
-                print(f"Generated an exception: {exc}")
+                logging.error(f"Generated an exception: {exc}")
 
 if __name__ == '__main__':
     main()
