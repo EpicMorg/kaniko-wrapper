@@ -5,13 +5,14 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 
+# Загрузка переменных окружения из файла .env
 load_dotenv()
 
 def load_compose_file(file_path):
     with open(file_path, 'r') as file:
         return yaml.safe_load(file)
 
-def build_with_kaniko(service_name, build_context, dockerfile, image_name, kaniko_image):
+def build_with_kaniko(service_name, build_context, dockerfile, image_name, build_args, kaniko_image):
     kaniko_command = [
         'docker', 'run',
         '--rm',
@@ -21,6 +22,10 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, kanik
         '--dockerfile', f'/workspace/{dockerfile}',
         '--destination', image_name
     ]
+    
+    # Добавление аргументов сборки, если они есть
+    for arg_name, arg_value in build_args.items():
+        kaniko_command.extend(['--build-arg', f'{arg_name}={arg_value}'])
     
     print(f"Building {service_name} with Kaniko: {' '.join(kaniko_command)}")
     
@@ -64,12 +69,16 @@ def main():
             build_context = build_data.get('context', '.')
             dockerfile = build_data.get('dockerfile', 'Dockerfile')
             image_name = service_data.get('image')
+            build_args = build_data.get('args', {})
+            
+            # Замена переменных окружения на их значения
+            build_args = {key: os.getenv(key, value) for key, value in build_args.items()}
             
             if not image_name:
                 print(f"No image specified for service {service_name}")
                 continue
             
-            futures.append(executor.submit(build_with_kaniko, service_name, build_context, dockerfile, image_name, kaniko_image))
+            futures.append(executor.submit(build_with_kaniko, service_name, build_context, dockerfile, image_name, build_args, kaniko_image))
         
         for future in as_completed(futures):
             try:
