@@ -61,7 +61,7 @@ def build_with_kaniko(service_name, build_context, dockerfile, image_name, build
 
     # Add Docker config mounts for both read-only access
     kaniko_command.extend([
-        '-v', '/var/run/docker.sock:/var/run/docker.sock:ro',  # Access to Docker daemon
+#        '-v', '/var/run/docker.sock:/var/run/docker.sock:ro',  # Access to Docker daemon
         '-v', f'{os.path.expanduser("~")}/.docker:/kaniko/.docker:ro',  # Use existing Docker credentials in read-only mode
     ])
 

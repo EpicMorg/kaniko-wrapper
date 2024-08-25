@@ -1,4 +1,6 @@
 # Changelog
+* `1.1.0.1`:
+    * Bugfix
 * `1.1.0.0`:
     * Improvements, bugfixes
 * `1.0.1.0`:
