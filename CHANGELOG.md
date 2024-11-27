@@ -1,4 +1,11 @@
 # Changelog
+* `1.1.1.1`:
+    * added `--log-timestamp=false`
+    * added `--push-retry=7`
+    * added `--image-fs-extract-retry=7`
+    * added `--image-download-retry=7`
+    * added `--snapshot-mode=full`
+    * added `--log-timestamp=false`
 * `1.1.0.1`:
     * Bugfix
 * `1.1.0.0`:
