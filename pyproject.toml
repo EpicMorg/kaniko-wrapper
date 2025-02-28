@@ -24,7 +24,8 @@ dependencies = [
   "pytest",
   "termcolor",
   "pydantic_settings",
-  "colorlog"
+  "colorlog",
+  "toml (>=0.10.2,<0.11.0)"
 ]
 description = "EpicMorg: Kaniko-Compose Wrapper - CLI wrapper for Kaniko build system"
 readme = "README.md"

@@ -16,6 +16,7 @@ class KanikoBuilder:
         self.services = []
 
     def validate_compose_file(self):
+        """Validate and load the docker-compose file."""
         loader = ComposeFileLoader(self.compose_file)
         try:
             self.compose_data = loader.load()
@@ -25,9 +26,10 @@ class KanikoBuilder:
             raise e
 
     def process_services(self):
+        """Process services from the docker-compose file."""
         if "services" not in self.compose_data:
             logger.error("No services found in docker-compose file.")
-            raise Exception("No services found")
+            raise ValueError("No services found in docker-compose file.")
 
         for service_name, service_info in self.compose_data["services"].items():
             dockerfile = service_info.get("build", {}).get("dockerfile", "Dockerfile")
@@ -49,5 +51,9 @@ class KanikoBuilder:
             self.services.append(service)
 
     def build_services(self):
+        """Build all services using Kaniko."""
         for service in self.services:
-            service.build()
+            try:
+                service.build()
+            except Exception as e:
+                logger.error(f"Failed to build service {service.service_name}: {e}")

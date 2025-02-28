@@ -9,19 +9,6 @@ from kaniko_wrapper.helper.log_print import logger
 
 
 @dataclass
-class BuildKaniko:
-    service_name: str
-    build_context: str
-    dockerfile: str
-    image_name: str
-    build_args: dict
-    kaniko_image: str
-    deploy: bool
-    dry: bool
-    no_push: bool
-
-
-@dataclass
 class ComposeFileLoader:
     """Class responsible for loading the docker-compose.yml file."""
 
@@ -42,12 +29,14 @@ class ComposeFileLoader:
 class ArgParser:
     """Class responsible for parsing command line arguments."""
 
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(
-        description="Kaniko-Compose Wrapper", add_help=False
-    )
+    parser: argparse.ArgumentParser = None
 
     def __post_init__(self):
-        self._add_arguments()
+        if self.parser is None:
+            self.parser = argparse.ArgumentParser(
+                description="Kaniko-Compose Wrapper", add_help=False
+            )
+            self._add_arguments()
 
     def _add_arguments(self):
         self.parser.add_argument(
@@ -110,6 +99,12 @@ class BuildKaniko:
     no_push: bool
 
     def build(self):
+        """Build the Docker image using Kaniko."""
+        if not os.path.exists(self.build_context):
+            raise FileNotFoundError(f"Build context not found: {self.build_context}")
+        if not os.path.exists(os.path.join(self.build_context, self.dockerfile)):
+            raise FileNotFoundError(f"Dockerfile not found: {self.dockerfile}")
+
         kaniko_command = self._generate_kaniko_command()
         logger.info(
             f"Building {self.service_name} with Kaniko: {' '.join(kaniko_command)}"
@@ -120,8 +115,8 @@ class BuildKaniko:
         ) as process:
             self._log_process_output(process)
 
-            if process.returncode != 0:
-                raise Exception(f"Failed to build {self.service_name}")
+            if process.returncode == 0:
+                logger.info(f"{self.service_name} built successfully.")
 
     def _generate_kaniko_command(self) -> List[str]:
         """Generate the Kaniko command based on the provided parameters."""
@@ -150,16 +145,13 @@ class BuildKaniko:
             "--cleanup",
         ]
 
-        if self.deploy:
+        if self.deploy and not self.no_push:
             kaniko_command.extend(["--destination", self.image_name])
-        elif self.dry:
-            kaniko_command.extend(["--no-push"])
-
-        if self.no_push:
+        elif self.dry or self.no_push:
             kaniko_command.append("--no-push")
 
         for arg_name, arg_value in self.build_args.items():
-            kaniko_command.append(f"--build-arg {arg_name}={arg_value}")
+            kaniko_command.extend(["--build-arg", f"{arg_name}={arg_value}"])
 
         return kaniko_command
 

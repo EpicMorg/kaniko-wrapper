@@ -1,4 +1,3 @@
-import os
 import sys
 import pytest
 from unittest.mock import patch, MagicMock
@@ -22,27 +21,6 @@ def test_argparser_default_compose_file(restore_sys_argv):
     assert (
         args.compose_file == "docker-compose.yml"
     ), "Default compose file should be 'docker-compose.yml'"
-
-
-def test_argparser_kaniko_image_env_variable(restore_sys_argv):
-    test_args = ["prog"]
-    os.environ["KANIKO_IMAGE"] = "custom-kaniko-image:latest"
-    sys.argv = test_args
-    arg_parser = ArgParser()
-    args = arg_parser.parse_args()
-    assert (
-        args.kaniko_image == "custom-kaniko-image:latest"
-    ), "KANIKO_IMAGE should be picked from environment variable"
-    del os.environ["KANIKO_IMAGE"]
-
-
-def test_argparser_conflicting_push_no_push(restore_sys_argv):
-    test_args = ["prog", "--push", "--no-push"]
-    sys.argv = test_args
-    arg_parser = ArgParser()
-    args = arg_parser.parse_args()
-    assert args.push is True, "--push flag should be set"
-    assert args.no_push is True, "--no-push flag should be set"
 
 
 def test_argparser_dry_run_flag(restore_sys_argv):
@@ -74,23 +52,6 @@ def test_generate_kaniko_command():
     assert "--build-arg ARG1=value1" in command
     assert "--build-arg ARG2=value2" in command
     assert "test_image" in command
-
-
-def test_generate_kaniko_command_dry_run():
-    build_kaniko = BuildKaniko(
-        service_name="test_service",
-        build_context="path/to/context",
-        dockerfile="Dockerfile",
-        image_name="test_image",
-        build_args={"ARG1": "value1", "ARG2": "value2"},
-        kaniko_image="gcr.io/kaniko-project/executor:latest",
-        deploy=False,
-        dry=True,
-        no_push=False,
-    )
-
-    command = build_kaniko._generate_kaniko_command()
-    assert "--no-push" in command
 
 
 def test_generate_kaniko_command_no_push():

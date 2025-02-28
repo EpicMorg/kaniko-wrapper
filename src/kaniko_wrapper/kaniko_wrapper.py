@@ -1,3 +1,4 @@
+import sys
 from kaniko_wrapper.setting import SCRIPT_VERSION
 from kaniko_wrapper.helper._dataclass import ArgParser
 from kaniko_wrapper.helper.class_kaniko import KanikoBuilder
@@ -9,16 +10,15 @@ def main():
     Main function to process command-line arguments, build services using Kaniko,
     and handle various tasks like displaying version or help.
     """
-    args = ArgParser().parse_args()
+    parser = ArgParser()
+    args = parser.parse_args()
 
-    # Version flag
-    if args.version:
-        logger.info(f"Kaniko Compose Wrapper Version: {SCRIPT_VERSION}")
+    if len(sys.argv) == 1 or args.help:
+        show_help()
         return
 
-    # Help flag
-    if args.help:
-        show_help()
+    if args.version:
+        logger.info(f"Kaniko Compose Wrapper Version: {SCRIPT_VERSION}")
         return
 
     try:
@@ -32,7 +32,3 @@ def main():
         logger.error(f"Invalid value: {str(e)}")
     except Exception as e:
         logger.error(f"An unexpected error occurred: {str(e)}")
-
-
-if __name__ == "__main__":
-    main()

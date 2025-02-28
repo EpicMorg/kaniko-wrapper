@@ -43,10 +43,7 @@ docker login
 - Запустите сборку с помощью Kaniko с правильными путями и параметрами.
 
 ```bash 
-  poetry run kaniko build \
-  --compose-file /home/./.wrapper_builder_1/docker-compose.yml \
-  --kaniko-image gcr.io/kaniko-project/executor:latest \
-  --push --destination gcr.io/my-project/my-image:tagname
+kaniko-wrapper --dry-run
 ```
 
 #### Основные моменты:
