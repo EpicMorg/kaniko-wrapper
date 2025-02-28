@@ -1,4 +1,13 @@
 # Changelog
+* `2.0.0.0`:
+    * Fully refactored by @marryivanova. Special thanks!
+	* Renamed commands to:
+		* `--compose-file` - Path to docker-compose.yml file
+		* `--kaniko-image` Kaniko executor image (def. `gcr.io/kaniko-project/executor:latest`)
+		* `--push`, `--deploy`, `-d`, `-p` - Deploy the built images to the registry
+		* `--dry-run`, `--dry` - Dry run: build images without pushing and with cleanup
+		* `--version`, `-v` - Show script version
+		* `--help`, `-h` - Show this help message and exit
 * `1.1.1.1`:
     * added `--log-timestamp=false`
     * added `--push-retry=7`

@@ -7,7 +7,7 @@ packages = ["src/kaniko_wrapper"]
 
 [project]
 name = "kaniko-wrapper"
-version = "2.0.0.0"
+version = "2.0.0.1"
 authors = [
     {name = "Marry", email = "okomarova@saber.games"},
     {name = "EpicMorg", email = "developer@epicm.org"}
@@ -31,7 +31,7 @@ description = "EpicMorg: Kaniko-Compose Wrapper - CLI wrapper for Kaniko build s
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
-keywords = ["kaniko", "docker", "build"]
+keywords = ["kaniko", "docker", "build", "wrapper", "ci"]
 
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -43,8 +43,8 @@ classifiers = [
 kaniko-wrapper = "kaniko_wrapper.kaniko_wrapper:main"
 
 [project.urls]
-Homepage = "https://github.com/EpicMorg/kaniko-wrapper"
-Documentation = "https://github.com/EpicMorg/kaniko-wrapper/blob/master/README.md"
-Repository = "https://github.com/EpicMorg/kaniko-wrapper.git"
+"Homepage" = "https://github.com/EpicMorg/kaniko-wrapper"
+"Documentation" = "https://github.com/EpicMorg/kaniko-wrapper/blob/master/README.md"
+"Repository" = "https://github.com/EpicMorg/kaniko-wrapper.git"
 "Bug Tracker" = "https://github.com/EpicMorg/kaniko-wrapper/issues"
-Changelog = "https://github.com/EpicMorg/kaniko-wrapper/blob/master/CHANGELOG.md"
+"Changelog" = "https://github.com/EpicMorg/kaniko-wrapper/blob/master/CHANGELOG.md"

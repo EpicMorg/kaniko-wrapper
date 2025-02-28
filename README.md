@@ -12,9 +12,9 @@ Python wrapper for run kaniko from shell with parameters from `docker-compose.ym
 
 ## How to
 ```
-pip install kaniko-wapper
+pip install kaniko-wrapper
 cd <...>/directory/contains/docker/and/docker-compose-file/
-kaniko-wapper
+kaniko-wrapper
 ```
 
 ### Arguments (examples)
