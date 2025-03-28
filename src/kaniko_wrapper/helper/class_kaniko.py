@@ -7,6 +7,7 @@ class KanikoBuilder:
 
     def __init__(self, args):
         self.args = args
+        self.network_host = args.network_host
         self.compose_file = args.compose_file
         self.kaniko_image = args.kaniko_image
         self.deploy = args.push
@@ -47,6 +48,7 @@ class KanikoBuilder:
                 deploy=self.deploy,
                 dry=self.dry_run,
                 no_push=self.no_push,
+                network_host=self.network_host,
             )
             self.services.append(service)
 
