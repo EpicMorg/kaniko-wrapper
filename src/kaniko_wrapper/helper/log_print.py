@@ -37,6 +37,7 @@ This script allows you to build Docker images using Kaniko.
 
 {colored('Options:', 'yellow', attrs=['bold'])}
   {colored('--compose-file FILE', 'green')}  : Path to the docker-compose.yml file (default: docker-compose.yml)
+  {colored('--network-host', 'green')}       : Use host network mode for Kaniko builder
   {colored('--kaniko-image IMAGE', 'green')} : Name of the Kaniko executor image (default: gcr.io/kaniko-project/executor:latest)
   {colored('--push, --deploy, -d', 'green')} : Deploy the built images to the registry
   {colored('--dry-run, --dry', 'green')}     : Perform a build without pushing and with cleanup
