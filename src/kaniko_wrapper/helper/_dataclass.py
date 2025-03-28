@@ -123,6 +123,7 @@ class BuildKaniko:
         kaniko_command = [
             "docker",
             "run",
+            "--network-host" if os.getenv("KANIKO_NETWORK_HOST", "false").lower() == "true" else None,
             "--rm",
             "-t",
             "-v",
@@ -144,6 +145,7 @@ class BuildKaniko:
             "--single-snapshot",
             "--cleanup",
         ]
+        kaniko_command = [arg for arg in kaniko_command if arg is not None]
 
         if self.deploy and not self.no_push:
             kaniko_command.extend(["--destination", self.image_name])
