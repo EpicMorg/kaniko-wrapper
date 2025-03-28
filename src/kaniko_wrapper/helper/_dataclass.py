@@ -79,6 +79,11 @@ class ArgParser:
             type=str,
             help="Path to the directory with Dockerfiles",
         )
+        self.parser.add_argument(
+            "--network-host",
+            action="store_true",
+            help="Use host network mode for Kaniko builder",
+        )
 
     def parse_args(self) -> argparse.Namespace:
         return self.parser.parse_args()
