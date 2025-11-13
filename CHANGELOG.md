@@ -1,4 +1,8 @@
 # Changelog
+* `3.0.0.0`: 
+	* fixed Logic
+	* bugfixes
+	* refactored
 * `2.0.0.0`:
     * Fully refactored by @marryivanova. Special thanks!
 	* Renamed commands to:

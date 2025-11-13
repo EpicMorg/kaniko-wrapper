@@ -12,8 +12,7 @@ import logging
 import sys
 from typing import List, Dict, Any
 
-
-SCRIPT_VERSION = "3.0.0"
+SCRIPT_VERSION = "3.2.0"
 
 # ASCII art for EpicMorg
 ASCII_ART = r"""
@@ -40,24 +39,25 @@ load_dotenv()
 def setup_logging():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def parse_args():
+def create_parser() -> argparse.ArgumentParser:
+    """Creates and configures the argument parser."""
     parser = argparse.ArgumentParser(description="EpicMorg: Kaniko-Compose Wrapper", add_help=False)
     
-    
+    # --- Core Flags ---
     parser.add_argument('--compose-file', default=os.getenv('COMPOSE_FILE', 'docker-compose.yml'), help='Path to docker-compose.yml file')
     parser.add_argument('--version', '-v', action='store_true', help='Show script version')
     parser.add_argument('--help', '-h', action='store_true', help='Show this help message and exit')
     
-    
+    # --- Control Flags ---
     parser.add_argument('--engine', default='podman', choices=['podman', 'docker'], help='Container engine to use (default: podman)')
     parser.add_argument('--workers', type=int, default=4, help='Number of parallel build workers (default: 4)')
     parser.add_argument('--network', default='host', help='Network mode. (default: host)')
     
-    
+    # --- Command Flags ---
     parser.add_argument('--push', '--deploy', '-d', '-p', action='store_true', help='Push the built images to the registry (and mirrors)')
     parser.add_argument('--dry-run', '--dry', action='store_true', help='Build images without pushing (adds --no-push)')
 
-    
+    # --- Kaniko Flags ---
     kaniko_group = parser.add_argument_group('Kaniko Arguments')
     kaniko_group.add_argument('--kaniko-image', default=os.getenv('KANIKO_IMAGE', 'gcr.io/kaniko-project/executor:latest'), help='Kaniko executor image')
     kaniko_group.add_argument('--skopeo-image', default='quay.io/skopeo/skopeo:latest', help='Skopeo image for mirroring')
@@ -69,30 +69,39 @@ def parse_args():
     kaniko_group.add_argument('--no-cleanup', action='store_true', default=False, help='Disable Kaniko --cleanup flag (default: cleanup=true)')
     kaniko_group.add_argument('--single-snapshot', action='store_true', default=True, help='Enable Kaniko --single-snapshot (default: true)')
     
-    return parser.parse_args()
+    return parser
 
 def load_compose_file(file_path):
     with open(file_path, 'r') as file:
         return yaml.safe_load(file)
 
 def _run_command_stream(cmd: List[str], service_name: str) -> bool:
-    """Helper for running a command and streaming its logs."""
+    """
+    Helper for running a command and streaming its logs.
+    ROLLED BACK: Simple, robust streaming that worked in v1.1.1.1.
+    This will show 'torn' logs (stderr/stdout) but will not buffer 'apt-get'.
+    """
     logging.info(f"[{service_name}] Executing: {' '.join(cmd)}")
     
+    # Use Popen with separate stdout/stderr pipes
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     
-    # Стрим output
-    for line in process.stdout:
-        logging.info(f"[{service_name}] {line.strip()}")
-    
+    # Non-blocking read for stdout
+    if process.stdout:
+        for line in iter(process.stdout.readline, ''):
+            logging.info(f"[{service_name}] {line.strip()}")
+
+    # Non-blocking read for stderr
+    if process.stderr:
+        for line in iter(process.stderr.readline, ''):
+            # Log errors as errors
+            logging.error(f"[{service_name}] {line.strip()}")
+
     process.wait()
     
     if process.returncode == 0:
         return True
     else:
-        
-        for line in process.stderr:
-            logging.error(f"[{service_name}] {line.strip()}")
         logging.error(f"[{service_name}] Command failed with code {process.returncode}")
         return False
 
@@ -101,26 +110,18 @@ def _run_skopeo_copy(source_image: str, dest_image: str, cli_args: argparse.Name
     Run 'skopeo copy' inside container.
     """
     skopeo_command = [cli_args.engine, 'run']
-
-    
     skopeo_command.append(f'--network={cli_args.network}')
-
     skopeo_command.extend(['--rm'])
-
-    
-    
     skopeo_command.extend(['-v', f'{docker_config_dir}:/root/.docker:ro'])
-
     skopeo_command.extend([
         cli_args.skopeo_image,
         'copy',
-        '--all', 
+        '--all',
         f'docker://{source_image}',
         f'docker://{dest_image}'
     ])
     
     if not _run_command_stream(skopeo_command, f"{service_name}-mirror"):
-        
         logging.error(f"[{service_name}] Failed to mirror {source_image} to {dest_image}")
     else:
         logging.info(f"[{service_name}] Successfully mirrored to {dest_image}")
@@ -140,29 +141,17 @@ def build_and_mirror_task(
     1. Builds an image via Kaniko.
     2. If --push, pushes to mirrors via Skopeo.
     """
-    
-    
     docker_config_dir = os.path.expanduser("~/.docker")
     abs_build_context = os.path.abspath(build_context)
     
-    
     kaniko_command = [cli_args.engine, 'run']
-
-    
     kaniko_command.append(f'--network={cli_args.network}')
-
     kaniko_command.extend(['--rm', '-t'])
-
-    
     kaniko_command.extend([
         '-v', f'{abs_build_context}:/workspace',
         '-v', f'{docker_config_dir}:/kaniko/.docker:ro',
     ])
-
-    
     kaniko_command.append(cli_args.kaniko_image)
-
-    
     kaniko_command.extend([
         '--context', '/workspace',
         '--dockerfile', f'/workspace/{dockerfile}',
@@ -183,135 +172,139 @@ def build_and_mirror_task(
     if cli_args.single_snapshot:
         kaniko_command.append('--single-snapshot')
 
-    
     if cli_args.push:
         kaniko_command.extend(['--destination', image_name])
     else:
-        
         kaniko_command.append('--no-push')
-    
     
     for arg_name, arg_value in build_args.items():
         kaniko_command.extend(['--build-arg', f'{arg_name}={arg_value}'])
     
-    
+    # --- Run Kaniko ---
     if not _run_command_stream(kaniko_command, service_name):
         raise Exception(f"Failed to build {service_name}")
     
     logging.info(f"Successfully built {service_name}")
 
-    
+    # --- Run Skopeo (Mirroring) ---
     if cli_args.push and mirrors:
         logging.info(f"[{service_name}] Build successful. Mirroring to {len(mirrors)} destinations...")
         for mirror in mirrors:
-            
             _run_skopeo_copy(image_name, mirror, cli_args, docker_config_dir, service_name)
 
 
-def show_help():
+def show_help(parser: argparse.ArgumentParser):
+    """Prints the custom ASCII art and the parser's help."""
     print(ASCII_ART)
     print(f"EpicMorg: Kaniko-Compose Wrapper v{SCRIPT_VERSION}\n")
-    
-    argparse.ArgumentParser(description=f"Kaniko Wrapper v{SCRIPT_VERSION}").print_help()
+    parser.print_help()
     
 def show_version():
     print(ASCII_ART)
     print(f"EpicMorg: Kaniko-Compose Wrapper {SCRIPT_VERSION}, Python: {sys.version}")
 
 def main():
-    """
-    Main function to process command-line arguments, build services using Kaniko,
-    and handle various tasks like displaying version or help.
-    """
-    parser = ArgParser()
+    setup_logging()
+    
+    parser = create_parser()
     args = parser.parse_args()
 
     if args.help:
-        show_help()
+        show_help(parser)
         return
     
     if args.version:
         show_version()
         return
     
-    
+    action_specified = any([
+        args.push,
+        args.dry_run,
+        args.compose_file != os.getenv('COMPOSE_FILE', 'docker-compose.yml') 
+    ])
+
+    if not action_specified:
+        show_version()
+        return
     
     compose_file = args.compose_file
     
     if not os.path.exists(compose_file):
         logging.error(f"{compose_file} not found")
-        return
+        sys.exit(1)
     
     compose_data = load_compose_file(compose_file)
-    
     services = compose_data.get('services', {})
     image_names = defaultdict(int)
-    
     
     for service_name, service_data in services.items():
         if not service_data:
             logging.warning(f"Service {service_name} is empty (null), skipping.")
             continue
-            
         image_name = service_data.get('image')
         if not image_name:
             logging.warning(f"No image specified for service {service_name}, skipping.")
             continue
-        
         image_names[image_name] += 1
     
     for image_name, count in image_names.items():
         if count > 1:
             logging.error(f"Error: Image name {image_name} is used {count} times.")
             return
-    
-    try:
-        
-        with ThreadPoolExecutor(max_workers=args.workers) as executor:
-            logging.info(f"Starting build with max {args.workers} workers using {args.engine} engine...")
-            futures = []
-            
-            for service_name, service_data in services.items():
-                if not service_data: continue
-                
-                build_data = service_data.get('build', {})
-                if not build_data:
-                    logging.warning(f"No 'build' section for service {service_name}, skipping.")
-                    continue
-                    
-                build_context = build_data.get('context', '.')
-                dockerfile = build_data.get('dockerfile', 'Dockerfile')
-                image_name = service_data.get('image')
-                
-                if not image_name:
-                    logging.warning(f"No image specified for service {service_name}, skipping.")
-                    continue
-                    
-                build_args = build_data.get('args', {})
-                
-                build_args = {key: os.getenv(key, str(value)) for key, value in build_args.items()} 
-                
-                
-                mirrors = service_data.get('x-mirrors', [])
-                
-                futures.append(executor.submit(
-                    build_and_mirror_task, 
-                    service_name, 
-                    build_context, 
-                    dockerfile, 
-                    image_name, 
-                    build_args, 
-                    mirrors, 
-                    args  
-                ))
-            
-            for future in as_completed(futures):
-                future.result() 
 
+    # --- FIXED: Top-level Ctrl+C handler ---
+    executor = None
+    try:
+        executor = ThreadPoolExecutor(max_workers=args.workers)
+        logging.info(f"Starting build with max {args.workers} workers using {args.engine} engine...")
+        futures = []
+        
+        for service_name, service_data in services.items():
+            if not service_data: continue
+            build_data = service_data.get('build', {})
+            if not build_data:
+                logging.warning(f"No 'build' section for service {service_name}, skipping.")
+                continue
+            build_context = build_data.get('context', '.')
+            dockerfile = build_data.get('dockerfile', 'Dockerfile')
+            image_name = service_data.get('image')
+            if not image_name:
+                logging.warning(f"No image specified for service {service_name}, skipping.")
+                continue
+            build_args = build_data.get('args', {})
+            build_args = {key: os.getenv(key, str(value)) for key, value in build_args.items()} 
+            mirrors = service_data.get('x-mirrors', [])
+            
+            futures.append(executor.submit(
+                build_and_mirror_task, 
+                service_name, 
+                build_context, 
+                dockerfile, 
+                image_name, 
+                build_args, 
+                mirrors, 
+                args
+            ))
+        
+        for future in as_completed(futures):
+            future.result() # Will re-throw exception if a worker failed
+
+    except KeyboardInterrupt:
+        logging.warning("Build canceled by user. Shutting down workers...")
+        if executor:
+            # This is the correct way to kill running Popen processes
+            executor.shutdown(wait=False, cancel_futures=True)
+            # В Python 3.9+ 'cancel_futures=True' убивает Popen.
+            # В Python < 3.9 нам пришлось бы самим хранить Popen-процессы и убивать их.
+            # Будем считать, что у нас > 3.9
+        sys.exit(130)
     except Exception as exc:
         logging.error(f"Build failed: {exc}")
         sys.exit(1)
+    finally:
+        # Ensure executor is always shut down
+        if executor:
+            executor.shutdown(wait=True)
 
 if __name__ == '__main__':
     main()
- 
