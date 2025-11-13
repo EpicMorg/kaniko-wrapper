@@ -1,4 +1,4 @@
-VERSION             =  "2024.08.09"
+VERSION             =  "2025.02.28"
 AUTHOR              =  "EpicMorg"
 MODIFIED            =  "STAM"
 PIP_BREAK_SYSTEM_PACKAGES=1
@@ -26,6 +26,7 @@ pip:
 	rm -rf /usr/lib/python3.8/EXTERNALLY-MANAGED
 	rm -rf /usr/lib/python3.9/EXTERNALLY-MANAGED
 	rm -rf /usr/lib/python3.9/EXTERNALLY-MANAGED
+	rm -rf /usr/lib/python3.10/EXTERNALLY-MANAGED
 	rm -rf /usr/lib/python3.11/EXTERNALLY-MANAGED
 	rm -rf /usr/lib/python3.12/EXTERNALLY-MANAGED
 	rm -rf /usr/lib/python3.13/EXTERNALLY-MANAGED
