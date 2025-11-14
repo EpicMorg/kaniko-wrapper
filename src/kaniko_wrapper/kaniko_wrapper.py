@@ -14,7 +14,7 @@ import threading
 from queue import Queue, Empty
 from typing import List, Dict, Any
 
-SCRIPT_VERSION = "3.2.0"
+SCRIPT_VERSION = "3.0.0.0"
 
 # Lock для синхронизации вывода логов в многопоточном режиме
 _log_lock = threading.Lock()
