@@ -95,6 +95,12 @@ class ArgParser:
             help="Override log level (default: from settings / LOG_LEVEL env)",
         )
         self.parser.add_argument(
+            "--engine",
+            default=os.getenv("KANIKO_ENGINE", "docker"),
+            choices=["docker", "podman"],
+            help="Container engine used to run the kaniko executor (default: docker)",
+        )
+        self.parser.add_argument(
             "--docker-dir",
             type=str,
             help="Path to the directory with Dockerfiles",

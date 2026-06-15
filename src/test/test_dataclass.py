@@ -146,3 +146,15 @@ def test_build_raises_when_context_missing():
     # Real path that does not exist -> FileNotFoundError before any subprocess.
     with pytest.raises(FileNotFoundError):
         _make_build(build_context="definitely/missing/path").build()
+
+def test_argparser_default_engine(restore_sys_argv, monkeypatch):
+    monkeypatch.delenv("KANIKO_ENGINE", raising=False)
+    sys.argv = ["prog"]
+    args = ArgParser().parse_args()
+    assert args.engine == "docker"
+
+
+def test_argparser_engine_podman(restore_sys_argv):
+    sys.argv = ["prog", "--engine", "podman"]
+    args = ArgParser().parse_args()
+    assert args.engine == "podman"

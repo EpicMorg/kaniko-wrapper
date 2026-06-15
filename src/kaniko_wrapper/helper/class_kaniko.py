@@ -19,10 +19,7 @@ class KanikoBuilder:
         self.dry_run = args.dry_run
         self.no_push = args.no_push
         self.docker_dir = args.docker_dir
-        # Container engine. Hardcoded for now; 2.0.2.6 will set this from
-        # --engine. Centralized here so ensure_executor() and BuildKaniko stay
-        # in sync.
-        self.engine = "docker"
+        self.engine = args.engine
         self.services = []
 
     def validate_compose_file(self):

@@ -15,6 +15,7 @@ def _builder(**args_overrides):
     args = MagicMock()
     args.compose_file = "docker-compose.yml"
     args.kaniko_image = "ghcr.io/osscontainertools/kaniko:latest"
+    args.engine = "docker"
     for k, v in args_overrides.items():
         setattr(args, k, v)
     return KanikoBuilder(args)

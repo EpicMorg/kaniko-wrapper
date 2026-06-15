@@ -30,6 +30,7 @@ kaniko-wrapper
 * `--no-push` - Build without pushing to the registry
 * `--verbose`, `-V` - Verbose output (shortcut for `--log-level DEBUG`)
 * `--log-level` - Override log level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
+* `--engine` - Container engine: `docker` (default) or `podman`
 * `--version`, `-v` - Show script version
 * `--help`, `-h` - Show this help message and exit
 
