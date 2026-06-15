@@ -83,6 +83,18 @@ class ArgParser:
             "--help", "-h", action="store_true", help="Show this help message and exit"
         )
         self.parser.add_argument(
+            "--verbose",
+            "-V",
+            action="store_true",
+            help="Verbose output (shortcut for --log-level DEBUG)",
+        )
+        self.parser.add_argument(
+            "--log-level",
+            default=None,
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            help="Override log level (default: from settings / LOG_LEVEL env)",
+        )
+        self.parser.add_argument(
             "--docker-dir",
             type=str,
             help="Path to the directory with Dockerfiles",

@@ -12,6 +12,10 @@ def main():
     """
     parser = ArgParser()
     args = parser.parse_args()
+    if args.log_level:
+        logger.setLevel(args.log_level)
+    elif args.verbose:
+        logger.setLevel("DEBUG")
 
     if len(sys.argv) == 1 or args.help:
         show_help()
