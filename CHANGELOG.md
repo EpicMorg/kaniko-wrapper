@@ -9,6 +9,7 @@
     * **Removed:** `-t` from the `docker run` invocation (no TTY is attached to piped output).
     * Internal: concurrent `stdout`/`stderr` draining (fixes a pipe-buffer deadlock on large images); test suite updated to the new contract.
     * **Added:** `--engine` (`docker` | `podman`) — select the container engine that runs the executor.
+    * **Added:** `--network` — container network for the executor run; defaults to `host` for `podman` (fixes in-container DNS on push).
 * `2.0.0.0`-`2.0.0.1`:
     * Fully refactored by @marryivanova. Special thanks!
 	* Renamed commands to:

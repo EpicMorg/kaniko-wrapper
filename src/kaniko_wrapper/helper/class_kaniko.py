@@ -20,6 +20,7 @@ class KanikoBuilder:
         self.no_push = args.no_push
         self.docker_dir = args.docker_dir
         self.engine = args.engine
+        self.network = args.network or ("host" if self.engine == "podman" else None)
         self.services = []
 
     def validate_compose_file(self):
@@ -82,6 +83,7 @@ class KanikoBuilder:
                 no_push=self.no_push,
                 engine=self.engine,
                 mirrors=mirrors,
+                network=self.network,
             )
             self.services.append(service)
 

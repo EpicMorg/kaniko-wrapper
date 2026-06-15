@@ -158,3 +158,22 @@ def test_argparser_engine_podman(restore_sys_argv):
     sys.argv = ["prog", "--engine", "podman"]
     args = ArgParser().parse_args()
     assert args.engine == "podman"
+
+def test_generate_kaniko_command_with_network():
+    assert "--network=host" in _make_build(network="host")._generate_kaniko_command()
+
+
+def test_generate_kaniko_command_without_network():
+    cmd = _make_build()._generate_kaniko_command()
+    assert not any(t.startswith("--network") for t in cmd)
+
+
+def test_argparser_default_network(restore_sys_argv, monkeypatch):
+    monkeypatch.delenv("KANIKO_NETWORK", raising=False)
+    sys.argv = ["prog"]
+    assert ArgParser().parse_args().network is None
+
+
+def test_argparser_network(restore_sys_argv):
+    sys.argv = ["prog", "--network", "host"]
+    assert ArgParser().parse_args().network == "host"

@@ -101,6 +101,11 @@ class ArgParser:
             help="Container engine used to run the kaniko executor (default: docker)",
         )
         self.parser.add_argument(
+            "--network",
+            default=os.getenv("KANIKO_NETWORK"),
+            help="Executor run network (e.g. 'host'). Defaults to 'host' for podman.",
+        )
+        self.parser.add_argument(
             "--docker-dir",
             type=str,
             help="Path to the directory with Dockerfiles",
@@ -130,6 +135,7 @@ class BuildKaniko:
     # Extra push destinations (variant A: kaniko multi --destination).
     # Populated from the compose `x-mirrors` key in KanikoBuilder.
     mirrors: List[str] = field(default_factory=list)
+    network: Optional[str] = None
 
     def build(self) -> None:
         """Build the Docker image using Kaniko."""
@@ -192,10 +198,10 @@ class BuildKaniko:
 
     def _generate_kaniko_command(self) -> List[str]:
         """Generate the Kaniko command based on the provided parameters."""
-        kaniko_command = [
-            self.engine,
-            "run",
-            "--rm",
+        kaniko_command = [self.engine, "run", "--rm"]
+        if self.network:
+            kaniko_command.append(f"--network={self.network}")
+        kaniko_command += [
             "-v",
             f"{os.path.abspath(self.build_context)}:/workspace",
             "-v",

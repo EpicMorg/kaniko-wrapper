@@ -16,6 +16,7 @@ def _builder(**args_overrides):
     args.compose_file = "docker-compose.yml"
     args.kaniko_image = "ghcr.io/osscontainertools/kaniko:latest"
     args.engine = "docker"
+    args.network = None
     for k, v in args_overrides.items():
         setattr(args, k, v)
     return KanikoBuilder(args)
@@ -231,3 +232,23 @@ def test_build_services_aggregates_failures(mock_ensure):
     # aggregate-continue: s2 is still attempted after s1 fails
     s1.build.assert_called_once()
     s2.build.assert_called_once()
+
+def test_process_services_network_default_docker():
+    b = _builder()
+    b.compose_data = {"services": {"app": {"build": {"context": "."}, "image": "app:latest"}}}
+    b.process_services()
+    assert b.services[0].network is None
+
+
+def test_process_services_network_default_podman():
+    b = _builder(engine="podman")
+    b.compose_data = {"services": {"app": {"build": {"context": "."}, "image": "app:latest"}}}
+    b.process_services()
+    assert b.services[0].network == "host"
+
+
+def test_process_services_network_override():
+    b = _builder(engine="podman", network="bridge")
+    b.compose_data = {"services": {"app": {"build": {"context": "."}, "image": "app:latest"}}}
+    b.process_services()
+    assert b.services[0].network == "bridge"

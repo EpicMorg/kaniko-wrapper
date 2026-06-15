@@ -44,6 +44,7 @@ This script allows you to build Docker images using Kaniko.
   {colored('--verbose, -V', 'green')}        : Verbose output (shortcut for --log-level DEBUG)
   {colored('--log-level LEVEL', 'green')}    : Override log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
   {colored('--engine ENGINE', 'green')}     : Container engine: docker (default) or podman
+  {colored('--network NET', 'green')}        : Executor run network (e.g. host); default host for podman
 
 {colored('Mirrors:', 'yellow', attrs=['bold'])}
   Add an {colored('x-mirrors', 'green')} list to a compose service to push the built image to
