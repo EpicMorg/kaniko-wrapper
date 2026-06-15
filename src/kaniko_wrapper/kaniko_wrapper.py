@@ -1,5 +1,5 @@
 import sys
-from kaniko_wrapper.setting import SCRIPT_VERSION
+from kaniko_wrapper.settings import SCRIPT_VERSION
 from kaniko_wrapper.helper._dataclass import ArgParser, KanikoBuildError
 from kaniko_wrapper.helper.class_kaniko import KanikoBuilder
 from kaniko_wrapper.helper.log_print import logger, show_help

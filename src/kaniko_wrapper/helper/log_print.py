@@ -10,7 +10,7 @@ def show_help():
     """
     Displays detailed information about available commands and arguments.
     """
-    help_text = f"""
+    help_text = rf"""
 {colored('Kaniko Compose Wrapper', 'cyan', attrs=['bold'])}
     
     +=================================================+

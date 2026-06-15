@@ -1,7 +1,7 @@
 import logging
 import colorlog
 
-from kaniko_wrapper.setting import settings
+from kaniko_wrapper.settings import settings
 
 
 def setup_logger():
