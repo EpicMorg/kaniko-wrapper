@@ -1,22 +1,22 @@
-import toml
-from pathlib import Path
-from pydantic_settings import BaseSettings
+from importlib.metadata import version, PackageNotFoundError
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-script_dir = Path(__file__).parent.parent
-pyproject_path = script_dir / "pyproject.toml"
 
 try:
-    with open(pyproject_path, "r") as f:
-        pyproject_data = toml.load(f)
-        SCRIPT_VERSION = pyproject_data["project"]["version"]
-except FileNotFoundError:
-    SCRIPT_VERSION = "2.0.0.1"
-except KeyError:
-    SCRIPT_VERSION = "2.0.0.1"
+    # Single source of truth: the version baked into the installed package
+    # metadata (from pyproject [project].version at build time). Works for
+    # wheels and editable installs alike.
+    SCRIPT_VERSION = version("kaniko-wrapper")
+except PackageNotFoundError:
+    # Running straight from a source checkout without an install.
+    # `pip install -e .` makes the real version resolve here too.
+    SCRIPT_VERSION = "0.0.0.dev"
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env")
+
     log_level: str = "INFO"
     log_format: str = "%(log_color)s%(asctime)s - %(levelname)s - %(message)s"
     datefmt: str = "%Y-%m-%d %H:%M:%S"
@@ -27,9 +27,6 @@ class Settings(BaseSettings):
         "ERROR": "red",
         "CRITICAL": "bold_red",
     }
-
-    class Config:
-        env_file = ".env"
 
 
 settings = Settings()
