@@ -176,7 +176,13 @@ class BuildKaniko:
                 f"{self.service_name}: kaniko exited with code {returncode}"
             )
 
-        logger.info(f"{self.service_name} built successfully.")
+        if self.deploy and not self.no_push:
+            logger.info(
+                f"{self.service_name} built and pushed -> "
+                f"{', '.join(self._destinations())}"
+            )
+        else:
+            logger.info(f"{self.service_name} built successfully (not pushed).")
 
     def _generate_kaniko_command(self) -> List[str]:
         """Generate the Kaniko command based on the provided parameters."""
