@@ -177,3 +177,24 @@ def test_argparser_default_network(restore_sys_argv, monkeypatch):
 def test_argparser_network(restore_sys_argv):
     sys.argv = ["prog", "--network", "host"]
     assert ArgParser().parse_args().network == "host"
+
+def test_generate_kaniko_command_squash_default_on():
+    assert "--single-snapshot" in _make_build()._generate_kaniko_command()
+
+
+def test_generate_kaniko_command_squash_off():
+    assert "--single-snapshot" not in _make_build(squash=False)._generate_kaniko_command()
+
+def test_argparser_squash_default_true(restore_sys_argv):
+    sys.argv = ["prog"]
+    assert ArgParser().parse_args().squash is True
+
+
+def test_argparser_no_squash(restore_sys_argv):
+    sys.argv = ["prog", "--no-squash"]
+    assert ArgParser().parse_args().squash is False
+
+
+def test_argparser_squash(restore_sys_argv):
+    sys.argv = ["prog", "--squash"]
+    assert ArgParser().parse_args().squash is True

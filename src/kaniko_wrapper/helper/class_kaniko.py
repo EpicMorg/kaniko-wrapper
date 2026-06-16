@@ -21,6 +21,7 @@ class KanikoBuilder:
         self.docker_dir = args.docker_dir
         self.engine = args.engine
         self.network = args.network or ("host" if self.engine == "podman" else None)
+        self.squash_default = args.squash
         self.services = []
 
     def validate_compose_file(self):
@@ -71,6 +72,13 @@ class KanikoBuilder:
                     f"references, got {type(mirrors).__name__}"
                 )
 
+            squash = service_info.get("x-squash", self.squash_default)
+            if not isinstance(squash, bool):
+                raise ValueError(
+                    f"{service_name}: x-squash must be a boolean (true/false), "
+                    f"got {type(squash).__name__}"
+                )
+
             service = BuildKaniko(
                 service_name=service_name,
                 build_context=build_context,
@@ -84,6 +92,7 @@ class KanikoBuilder:
                 engine=self.engine,
                 mirrors=mirrors,
                 network=self.network,
+                squash=squash,
             )
             self.services.append(service)
 

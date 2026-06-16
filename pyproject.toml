@@ -7,7 +7,7 @@ packages = ["src/kaniko_wrapper"]
 
 [project]
 name = "kaniko-wrapper"
-version = "2.0.2.6"
+version = "2.0.3.0"
 authors = [
     {name = "Marry", email = "okomarova@saber.games"},
     {name = "EpicMorg", email = "developer@epicm.org"}
@@ -27,7 +27,7 @@ dependencies = [
 description = "EpicMorg: Kaniko-Compose Wrapper - CLI wrapper for Kaniko build system"
 readme = "README.md"
 license = {file = "LICENSE.md"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 keywords = ["kaniko", "docker", "build", "wrapper", "ci"]
 
 classifiers = [

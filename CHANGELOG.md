@@ -1,4 +1,7 @@
 # Changelog
+* `2.0.3.0`:
+    * **Added:** `x-squash` per-service compose key (bool, default `true`) — toggles single-layer output (`--single-snapshot`).
+    * **Added:** `--squash` / `--no-squash` — run-wide single-layer default (on); per-service `x-squash` overrides it.
 * `2.0.2.6`:
     * **Default executor image switched** from the archived `gcr.io/kaniko-project/executor:latest` to `ghcr.io/osscontainertools/kaniko:latest`. Google archived the original kaniko in 2025 and the old image is frozen at `v1.24.0`. Override with `--kaniko-image` or `KANIKO_IMAGE`.
     * **Fixed:** engine `stderr` (pull progress, kaniko's own logs) is no longer reported as `ERROR`. Build success/failure is now decided solely by the executor exit code.

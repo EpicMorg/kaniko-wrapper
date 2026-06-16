@@ -110,6 +110,13 @@ class ArgParser:
             type=str,
             help="Path to the directory with Dockerfiles",
         )
+        self.parser.add_argument(
+            "--squash",
+            action=argparse.BooleanOptionalAction,
+            default=True,
+            help="Single-layer output for all services (default: on). "
+                 "Per-service x-squash overrides this.",
+        )
 
     def parse_args(self) -> argparse.Namespace:
         return self.parser.parse_args()
@@ -136,6 +143,7 @@ class BuildKaniko:
     # Populated from the compose `x-mirrors` key in KanikoBuilder.
     mirrors: List[str] = field(default_factory=list)
     network: Optional[str] = None
+    squash: bool = True
 
     def build(self) -> None:
         """Build the Docker image using Kaniko."""
@@ -218,10 +226,10 @@ class BuildKaniko:
             "--snapshot-mode=full",
             "--log-timestamp=false",
             "--cache=false",
-            "--single-snapshot",
             "--cleanup",
         ]
-
+        if self.squash:
+            kaniko_command.append("--single-snapshot")
         if self.deploy and not self.no_push:
             for dest in self._destinations():
                 kaniko_command.extend(["--destination", dest])

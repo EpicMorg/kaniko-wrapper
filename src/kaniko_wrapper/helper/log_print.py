@@ -32,21 +32,22 @@ def show_help():
 This script allows you to build Docker images using Kaniko.
 
 {colored('Commands:', 'yellow', attrs=['bold'])}
-  {colored('--version, -v', 'green')}       : Show the version of the script
-  {colored('--help, -h', 'green')}          : Display this help message
+  {colored('--version, -v', 'green')}          : Show the version of the script
+  {colored('--help, -h', 'green')}             : Display this help message
 
-{colored('Options:', 'yellow', attrs=['bold'])}
-  {colored('--compose-file FILE', 'green')}  : Path to the docker-compose.yml file (default: docker-compose.yml)
-  {colored('--kaniko-image IMAGE', 'green')} : Kaniko executor image (default: ghcr.io/osscontainertools/kaniko:latest)
-  {colored('--push, --deploy, -d', 'green')} : Build and push to the registry and all x-mirrors
-  {colored('--dry-run, --dry', 'green')}     : Build without pushing
-  {colored('--no-push', 'green')}            : Build without pushing to the registry
-  {colored('--verbose, -V', 'green')}        : Verbose output (shortcut for --log-level DEBUG)
-  {colored('--log-level LEVEL', 'green')}    : Override log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
-  {colored('--engine ENGINE', 'green')}     : Container engine: docker (default) or podman
-  {colored('--network NET', 'green')}        : Executor run network (e.g. host); default host for podman
+{colored('Options (CLI):', 'yellow', attrs=['bold'])}
+  {colored('--compose-file FILE', 'green')}    : Path to the docker-compose.yml file (default: docker-compose.yml)
+  {colored('--kaniko-image IMAGE', 'green')}   : Kaniko executor image (default: ghcr.io/osscontainertools/kaniko:latest)
+  {colored('--push, --deploy, -d', 'green')}   : Build and push to the registry and all x-mirrors
+  {colored('--dry-run, --dry', 'green')}       : Build without pushing
+  {colored('--no-push', 'green')}              : Build without pushing to the registry
+  {colored('--verbose, -V', 'green')}          : Verbose output (shortcut for --log-level DEBUG)
+  {colored('--log-level LEVEL', 'green')}      : Override log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  {colored('--engine ENGINE', 'green')}        : Container engine: docker (default) or podman
+  {colored('--network NET', 'green')}          : Executor run network (e.g. host); default host for podman
+  {colored('--squash / --no-squash', 'green')} : Single-layer output, default on (x-squash overrides per service)
 
-{colored('Mirrors:', 'yellow', attrs=['bold'])}
+{colored('Mirrors (docker-compose.yml):', 'yellow', attrs=['bold'])}
   Add an {colored('x-mirrors', 'green')} list to a compose service to push the built image to
   additional registries within the same build. A failed push to any mirror
   fails the build.
@@ -56,6 +57,14 @@ This script allows you to build Docker images using Kaniko.
       image: docker.io/epicmorg/app:latest
       x-mirrors:
         - quay.io/epicmorg/app:latest
+
+{colored('Squash (docker-compose.yml):', 'yellow', attrs=['bold'])}
+  Add an {colored('x-squash', 'green')} field to a compose service to control single-layer output. Default is true (squash on).
+
+  services:
+    app:
+      image: docker.io/epicmorg/app:latest
+      x-squash: false
 
 {colored('Note:', 'yellow', attrs=['bold'])}
   This script uses Kaniko to build Docker images in a secure, efficient, and scalable way. Make sure to configure your environment properly.

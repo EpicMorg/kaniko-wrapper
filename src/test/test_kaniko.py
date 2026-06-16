@@ -17,6 +17,7 @@ def _builder(**args_overrides):
     args.kaniko_image = "ghcr.io/osscontainertools/kaniko:latest"
     args.engine = "docker"
     args.network = None
+    args.squash = True
     for k, v in args_overrides.items():
         setattr(args, k, v)
     return KanikoBuilder(args)
@@ -252,3 +253,36 @@ def test_process_services_network_override():
     b.compose_data = {"services": {"app": {"build": {"context": "."}, "image": "app:latest"}}}
     b.process_services()
     assert b.services[0].network == "bridge"
+
+def test_process_services_squash_default_true():
+    b = _builder()
+    b.compose_data = {"services": {"app": {"build": {"context": "."}, "image": "app:latest"}}}
+    b.process_services()
+    assert b.services[0].squash is True
+
+
+def test_process_services_squash_false():
+    b = _builder()
+    b.compose_data = {"services": {"app": {"build": {"context": "."}, "image": "app:latest", "x-squash": False}}}
+    b.process_services()
+    assert b.services[0].squash is False
+
+
+def test_process_services_squash_must_be_bool():
+    b = _builder()
+    b.compose_data = {"services": {"app": {"build": {"context": "."}, "image": "app:latest", "x-squash": "false"}}}
+    with pytest.raises(ValueError):
+        b.process_services()
+
+def test_process_services_squash_cli_default_false():
+    b = _builder(squash=False)
+    b.compose_data = {"services": {"app": {"build": {"context": "."}, "image": "app:latest"}}}
+    b.process_services()
+    assert b.services[0].squash is False
+
+
+def test_process_services_x_squash_overrides_cli():
+    b = _builder(squash=False)
+    b.compose_data = {"services": {"app": {"build": {"context": "."}, "image": "app:latest", "x-squash": True}}}
+    b.process_services()
+    assert b.services[0].squash is True
