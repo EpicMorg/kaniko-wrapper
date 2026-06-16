@@ -11,6 +11,9 @@ Python wrapper for run kaniko from shell with parameters from `docker-compose.ym
 3. `kaniko` dont support `docker-compose.yml` builds.
 
 ## How to
+
+> **Requerments** Minimal `Python` version is `3.9`. 
+
 ```
 pip install kaniko-wrapper
 cd <...>/directory/contains/docker/and/docker-compose-file/
@@ -31,8 +34,12 @@ kaniko-wrapper
 * `--verbose`, `-V` - Verbose output (shortcut for `--log-level DEBUG`)
 * `--log-level` - Override log level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
 * `--engine` - Container engine: `docker` (default) or `podman`
+* `--network NET` - Executor run network (e.g. host); default host for podman
+* `--squash / --no-squash` - Single-layer output, default on (x-squash overrides per service)
 * `--version`, `-v` - Show script version
 * `--help`, `-h` - Show this help message and exit
+
+ 
 
 ## Supported features (example):
 
@@ -59,11 +66,13 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile.develop
+      x-squash: false
   app-develop-17:
     image: "epicmorg/astralinux:image-develop-jdk17"
     build:
       context: .
       dockerfile: ./Dockerfile.develop-17
+      x-squash: true
 ```
 
 3. Mirrors — push one build to several registries
@@ -81,4 +90,15 @@ services:
       context: .
     x-mirrors:
       - quay.io/epicmorg/app:latest
+      - my.owned.hub/epicmorg/app:latest
 ```
+
+4. Squash (`docker-compose.yml`):
+  Add an `x-squash` field to a compose service to control single-layer output. Default is true (squash on).
+
+```
+  services:
+    app:
+      image: docker.io/epicmorg/app:latest
+      x-squash: false
+``` 

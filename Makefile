@@ -16,6 +16,7 @@ help:
 	@echo "make help                         - show this help."
 	@echo "make version                      - show version of this repository."
 	@echo "make pip                          - install requerments."
+	@echo "make test                         - run tests."
 	@echo "make build                        - build dist."
 	@echo "make deploy                       - upload to pupy.org."
 	@echo "make build-and-deploy             - alias to build and deploy."
@@ -30,8 +31,13 @@ pip:
 	rm -rf /usr/lib/python3.11/EXTERNALLY-MANAGED
 	rm -rf /usr/lib/python3.12/EXTERNALLY-MANAGED
 	rm -rf /usr/lib/python3.13/EXTERNALLY-MANAGED
+	rm -rf /usr/lib/python3.14/EXTERNALLY-MANAGED
+	rm -rf /usr/lib/python3.15/EXTERNALLY-MANAGED
 	pip3 install -r requirements.txt
 	pip install -r requirements.txt
+
+test:
+	pip install -e '.[test]' --break-system-packages && pytest
 
 build:
 	python3 -m build 
