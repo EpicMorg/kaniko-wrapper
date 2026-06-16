@@ -1,5 +1,6 @@
 # Changelog
 * `2.0.3.0`:
+    * **ATTENTION!**: Minimal version of `Python` is raised to `3.9`+.
     * **Added:** `x-squash` per-service compose key (bool, default `true`) — toggles single-layer output (`--single-snapshot`).
     * **Added:** `--squash` / `--no-squash` — run-wide single-layer default (on); per-service `x-squash` overrides it.
 * `2.0.2.6`:
@@ -19,7 +20,7 @@
 		* `--compose-file` - Path to docker-compose.yml file
 		* `--kaniko-image` Kaniko executor image (def. `gcr.io/kaniko-project/executor:latest`)
 		* `--push`, `--deploy`, `-d`, `-p` - Deploy the built images to the registry
-		* `--dry-run`, `--dry` - Dry run: build images without pushing and with cleanup
+		* `--dry-run`, `--dry` - Dry run: buildcd / images without pushing and with cleanup
 		* `--version`, `-v` - Show script version
 		* `--help`, `-h` - Show this help message and exit
 * `1.1.1.1`:
