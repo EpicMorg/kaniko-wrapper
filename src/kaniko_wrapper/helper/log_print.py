@@ -10,7 +10,7 @@ def show_help():
     """
     Displays detailed information about available commands and arguments.
     """
-    help_text = f"""
+    help_text = rf"""
 {colored('Kaniko Compose Wrapper', 'cyan', attrs=['bold'])}
     
     +=================================================+
@@ -37,11 +37,27 @@ This script allows you to build Docker images using Kaniko.
 
 {colored('Options:', 'yellow', attrs=['bold'])}
   {colored('--compose-file FILE', 'green')}  : Path to the docker-compose.yml file (default: docker-compose.yml)
-  {colored('--kaniko-image IMAGE', 'green')} : Name of the Kaniko executor image (default: gcr.io/kaniko-project/executor:latest)
-  {colored('--push, --deploy, -d', 'green')} : Deploy the built images to the registry
-  {colored('--dry-run, --dry', 'green')}     : Perform a build without pushing and with cleanup
+  {colored('--kaniko-image IMAGE', 'green')} : Kaniko executor image (default: ghcr.io/osscontainertools/kaniko:latest)
+  {colored('--push, --deploy, -d', 'green')} : Build and push to the registry and all x-mirrors
+  {colored('--dry-run, --dry', 'green')}     : Build without pushing
+  {colored('--no-push', 'green')}            : Build without pushing to the registry
+  {colored('--verbose, -V', 'green')}        : Verbose output (shortcut for --log-level DEBUG)
+  {colored('--log-level LEVEL', 'green')}    : Override log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  {colored('--engine ENGINE', 'green')}     : Container engine: docker (default) or podman
+  {colored('--network NET', 'green')}        : Executor run network (e.g. host); default host for podman
+
+{colored('Mirrors:', 'yellow', attrs=['bold'])}
+  Add an {colored('x-mirrors', 'green')} list to a compose service to push the built image to
+  additional registries within the same build. A failed push to any mirror
+  fails the build.
+
+  services:
+    app:
+      image: docker.io/epicmorg/app:latest
+      x-mirrors:
+        - quay.io/epicmorg/app:latest
 
 {colored('Note:', 'yellow', attrs=['bold'])}
   This script uses Kaniko to build Docker images in a secure, efficient, and scalable way. Make sure to configure your environment properly.
 """
-    logger.info(help_text)
+    print(help_text)

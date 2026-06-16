@@ -17,11 +17,20 @@ cd <...>/directory/contains/docker/and/docker-compose-file/
 kaniko-wrapper
 ```
 
+> **Note on the executor image.** Google archived the original `kaniko` in 2025
+> and `gcr.io/kaniko-project/executor` is frozen at `v1.24.0`. The default
+> executor is now the community fork `ghcr.io/osscontainertools/kaniko:latest`.
+> Pin a tag in CI and override with `--kaniko-image` / `KANIKO_IMAGE` if needed.
+
 ### Arguments (examples)
 * `--compose-file` - Path to docker-compose.yml file
-* `--kaniko-image` Kaniko executor image (def. `gcr.io/kaniko-project/executor:latest`)
-* `--push`, `--deploy`, `-d`, `-p` - Deploy the built images to the registry
-* `--dry-run`, `--dry` - Dry run: build images without pushing and with cleanup
+* `--kaniko-image` - Kaniko executor image (def. `ghcr.io/osscontainertools/kaniko:latest`)
+* `--push`, `--deploy`, `-d`, `-p` - Build and push to the registry and all `x-mirrors`
+* `--dry-run`, `--dry` - Dry run: build images without pushing
+* `--no-push` - Build without pushing to the registry
+* `--verbose`, `-V` - Verbose output (shortcut for `--log-level DEBUG`)
+* `--log-level` - Override log level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
+* `--engine` - Container engine: `docker` (default) or `podman`
 * `--version`, `-v` - Show script version
 * `--help`, `-h` - Show this help message and exit
 
@@ -55,4 +64,21 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile.develop-17
+```
+
+3. Mirrors — push one build to several registries
+
+Add an `x-mirrors` list to a service. On `--push`, the built image is pushed to
+the primary `image` and to every mirror in a single build (multiple
+`--destination`). A failed push to any mirror fails the build. All target
+registries must be authenticated in `~/.docker/config.json`.
+
+```
+services:
+  app:
+    image: docker.io/epicmorg/app:latest
+    build:
+      context: .
+    x-mirrors:
+      - quay.io/epicmorg/app:latest
 ```

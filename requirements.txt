@@ -1,2 +1,6 @@
-poetry==1.5.1
+# Build & publish toolchain only — NOT runtime dependencies.
+# Runtime deps live in pyproject.toml [project.dependencies].
+# Test deps:  pip install -e '.[test]'
+# Build/publish:  python -m build  &&  twine upload dist/*
+build
 twine

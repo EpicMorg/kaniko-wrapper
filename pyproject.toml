@@ -7,7 +7,7 @@ packages = ["src/kaniko_wrapper"]
 
 [project]
 name = "kaniko-wrapper"
-version = "2.0.0.1"
+version = "2.0.2.6"
 authors = [
     {name = "Marry", email = "okomarova@saber.games"},
     {name = "EpicMorg", email = "developer@epicm.org"}
@@ -20,16 +20,13 @@ maintainers = [
 dependencies = [
   "PyYAML",
   "python-dotenv",
-  "click",
-  "pytest",
   "termcolor",
-  "pydantic_settings",
-  "colorlog",
-  "toml (>=0.10.2,<0.11.0)"
+  "pydantic-settings",
+  "colorlog"
 ]
 description = "EpicMorg: Kaniko-Compose Wrapper - CLI wrapper for Kaniko build system"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = {file = "LICENSE.md"}
 requires-python = ">=3.8"
 keywords = ["kaniko", "docker", "build", "wrapper", "ci"]
 
@@ -38,6 +35,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: Unix"
 ]
+
+[project.optional-dependencies]
+test = ["pytest"]
 
 [project.scripts]
 kaniko-wrapper = "kaniko_wrapper.kaniko_wrapper:main"

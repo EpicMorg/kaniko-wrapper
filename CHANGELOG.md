@@ -1,5 +1,16 @@
 # Changelog
-* `2.0.0.0`:
+* `2.0.2.6`:
+    * **Default executor image switched** from the archived `gcr.io/kaniko-project/executor:latest` to `ghcr.io/osscontainertools/kaniko:latest`. Google archived the original kaniko in 2025 and the old image is frozen at `v1.24.0`. Override with `--kaniko-image` or `KANIKO_IMAGE`.
+    * **Fixed:** engine `stderr` (pull progress, kaniko's own logs) is no longer reported as `ERROR`. Build success/failure is now decided solely by the executor exit code.
+    * **Fixed:** failed builds now exit non-zero. Previously a failure was logged and the process still exited `0`.
+    * **Added:** the executor image is pulled once up front (`inspect || pull`, fail-fast), so pull output no longer pollutes per-build logs.
+    * **Added:** `x-mirrors` per-service key in `docker-compose.yml` — push the built image to additional registries in a single build via multiple `--destination`. A failed mirror push fails the build.
+    * **Added:** `--verbose`, `-V` and `--log-level`.
+    * **Removed:** `-t` from the `docker run` invocation (no TTY is attached to piped output).
+    * Internal: concurrent `stdout`/`stderr` draining (fixes a pipe-buffer deadlock on large images); test suite updated to the new contract.
+    * **Added:** `--engine` (`docker` | `podman`) — select the container engine that runs the executor.
+    * **Added:** `--network` — container network for the executor run; defaults to `host` for `podman` (fixes in-container DNS on push).
+* `2.0.0.0`-`2.0.0.1`:
     * Fully refactored by @marryivanova. Special thanks!
 	* Renamed commands to:
 		* `--compose-file` - Path to docker-compose.yml file

@@ -2,10 +2,16 @@ import os
 import yaml
 import argparse
 import subprocess
-from typing import Dict, List
+import threading
+from collections import deque
+from typing import Dict, List, Optional
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from kaniko_wrapper.helper.log_print import logger
+
+
+class KanikoBuildError(RuntimeError):
+    """Raised when a kaniko build/push returns a non-zero exit code."""
 
 
 @dataclass
@@ -46,7 +52,9 @@ class ArgParser:
         )
         self.parser.add_argument(
             "--kaniko-image",
-            default=os.getenv("KANIKO_IMAGE", "gcr.io/kaniko-project/executor:latest"),
+            default=os.getenv(
+                "KANIKO_IMAGE", "ghcr.io/osscontainertools/kaniko:latest"
+            ),
             help="Kaniko executor image",
         )
         self.parser.add_argument(
@@ -75,6 +83,29 @@ class ArgParser:
             "--help", "-h", action="store_true", help="Show this help message and exit"
         )
         self.parser.add_argument(
+            "--verbose",
+            "-V",
+            action="store_true",
+            help="Verbose output (shortcut for --log-level DEBUG)",
+        )
+        self.parser.add_argument(
+            "--log-level",
+            default=None,
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            help="Override log level (default: from settings / LOG_LEVEL env)",
+        )
+        self.parser.add_argument(
+            "--engine",
+            default=os.getenv("KANIKO_ENGINE", "docker"),
+            choices=["docker", "podman"],
+            help="Container engine used to run the kaniko executor (default: docker)",
+        )
+        self.parser.add_argument(
+            "--network",
+            default=os.getenv("KANIKO_NETWORK"),
+            help="Executor run network (e.g. 'host'). Defaults to 'host' for podman.",
+        )
+        self.parser.add_argument(
             "--docker-dir",
             type=str,
             help="Path to the directory with Dockerfiles",
@@ -97,8 +128,16 @@ class BuildKaniko:
     deploy: bool
     dry: bool
     no_push: bool
+    # Container engine used to run the kaniko executor. Hardcoded to "docker"
+    # for now; exposed as a field so 2.0.2.6 can wire it to --engine without
+    # touching the command body.
+    engine: str = "docker"
+    # Extra push destinations (variant A: kaniko multi --destination).
+    # Populated from the compose `x-mirrors` key in KanikoBuilder.
+    mirrors: List[str] = field(default_factory=list)
+    network: Optional[str] = None
 
-    def build(self):
+    def build(self) -> None:
         """Build the Docker image using Kaniko."""
         if not os.path.exists(self.build_context):
             raise FileNotFoundError(f"Build context not found: {self.build_context}")
@@ -110,21 +149,59 @@ class BuildKaniko:
             f"Building {self.service_name} with Kaniko: {' '.join(kaniko_command)}"
         )
 
-        with subprocess.Popen(
-            kaniko_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        ) as process:
-            self._log_process_output(process)
+        # Tail of stderr, kept so we can resurface the failure cause at ERROR
+        # level when the build fails (stderr itself is logged at DEBUG).
+        stderr_tail: deque = deque(maxlen=50)
 
-            if process.returncode == 0:
-                logger.info(f"{self.service_name} built successfully.")
+        process = subprocess.Popen(
+            kaniko_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+        )
+
+        # Drain both pipes concurrently. Reading them sequentially deadlocks
+        # on heavy images once the unread pipe fills its 64K kernel buffer.
+        t_out = threading.Thread(
+            target=self._drain, args=(process.stdout, logger.info), daemon=True
+        )
+        t_err = threading.Thread(
+            target=self._drain,
+            args=(process.stderr, logger.debug, stderr_tail),
+            daemon=True,
+        )
+        t_out.start()
+        t_err.start()
+        t_out.join()
+        t_err.join()
+
+        returncode = process.wait()
+
+        # Failure is decided by the exit code ONLY. stderr is not an error
+        # channel: docker/podman pull progress and kaniko's own logs land
+        # there even on a fully successful build.
+        if returncode != 0:
+            for line in stderr_tail:
+                logger.error(f"[{self.service_name}] {line}")
+            raise KanikoBuildError(
+                f"{self.service_name}: kaniko exited with code {returncode}"
+            )
+
+        if self.deploy and not self.no_push:
+            logger.info(
+                f"{self.service_name} built and pushed -> "
+                f"{', '.join(self._destinations())}"
+            )
+        else:
+            logger.info(f"{self.service_name} built successfully (not pushed).")
 
     def _generate_kaniko_command(self) -> List[str]:
         """Generate the Kaniko command based on the provided parameters."""
-        kaniko_command = [
-            "docker",
-            "run",
-            "--rm",
-            "-t",
+        kaniko_command = [self.engine, "run", "--rm"]
+        if self.network:
+            kaniko_command.append(f"--network={self.network}")
+        kaniko_command += [
             "-v",
             f"{os.path.abspath(self.build_context)}:/workspace",
             "-v",
@@ -146,7 +223,8 @@ class BuildKaniko:
         ]
 
         if self.deploy and not self.no_push:
-            kaniko_command.extend(["--destination", self.image_name])
+            for dest in self._destinations():
+                kaniko_command.extend(["--destination", dest])
         elif self.dry or self.no_push:
             kaniko_command.append("--no-push")
 
@@ -155,10 +233,38 @@ class BuildKaniko:
 
         return kaniko_command
 
+    def _destinations(self) -> List[str]:
+        """Primary image plus mirrors, de-duplicated, empties dropped.
+
+        Variant A: a single kaniko run pushes the built image to every
+        destination via repeated --destination flags. A failed push to any
+        destination makes kaniko exit non-zero (after --push-retry), so the
+        mirror failure is fatal for free, with no skopeo round-trip.
+        """
+        seen = set()
+        result: List[str] = []
+        for dest in [self.image_name, *self.mirrors]:
+            dest = (dest or "").strip()
+            if dest and dest not in seen:
+                seen.add(dest)
+                result.append(dest)
+        return result
+
     @staticmethod
-    def _log_process_output(process):
-        """Helper function to log the output and errors from the build process."""
-        for line in process.stdout:
-            logger.info(line.strip())
-        for line in process.stderr:
-            logger.error(line.strip())
+    def _drain(stream, log_fn, sink: Optional[deque] = None) -> None:
+        """Read a child stream line by line, log each line, optionally buffer.
+
+        Does not reinterpret severity from the stream identity: the caller
+        decides the log level (stdout -> info, stderr -> debug). Failure is
+        determined later from the process return code.
+        """
+        try:
+            for raw in iter(stream.readline, ""):
+                line = raw.rstrip("\n")
+                if not line:
+                    continue
+                log_fn(line)
+                if sink is not None:
+                    sink.append(line)
+        finally:
+            stream.close()
